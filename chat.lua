@@ -67,26 +67,63 @@ local channel = function(...)
 	return str:format(...)
 end
 
+local eventus = { 
+	guild = "CHAT_MSG_GUILD", 
+	whisper = "CHAT_MSG_WHISPER", 
+	party = "CHAT_MSG_PARTY", 
+	chan = "CHAT_MSG_CHANNEL", 
+	say = "CHAT_MSG_SAY", 
+	raid = "CHAT_MSG_RAID", 
+	raidleader ="CHAT_MSG_RAID_LEADER", 
+	raidwarning = "CHAT_MSG_RAID_WARNING", 
+	officer = "CHAT_MSG_OFFICER", 
+	yell = "CHAT_MSG_YELL", 
+	notice = "CHAT_MSG_CHANNEL_NOTICE", 
+	bg = "CHAT_MSG_BATTLEGROUND", 
+	bgl = "CHAT_MSG_BATTLEGROUND_LEADER", 
+} 
+
 local AddMessage = function(self, text, ...)
 	if(type(text) == "string") then
 		text = text:gsub('|Hchannel:(%d+)|h%[?(.-)%]?|h.+(|Hplayer.+)', channel)
-
 		text = ts:format(date"%H%M.%S", text)
+		
+		-- from idchat
+		text = text:gsub(' says:', ':')
+		text = text:gsub(' whispers:', ' |cff55ff99<|r')
+		text = text:gsub('To (|Hplayer.+|h):', '%1 |cffff3399>|r')
+		text = text:gsub('(|Hplayer.+|h) has earned the achievement (.+)!', '%1 ! %2')
+		
+		-- shitty way of getting highlight using hidden events :P
+		local name = UnitName"player"
+		if(text:lower():match(name:lower())) and arg2 ~= name then
+			for k,v in pairs(eventus) do
+				if eventus[k] == event then
+					text = text:gsub(name:gsub("[a-zA-Z]", function(x) return "[" .. x:lower() .. x:upper() .. "]" end), " |cffff0000%1|r",1)
+					PlaySoundFile("Sound\\interface\\MagicClick.wav")
+					break
+				end
+			end
+		end
 	end
-
 	return origs[self](self, text, ...)
 end
 
+-- add ctrl to the pool
 local scroll = function(self, dir)
 	if(dir > 0) then
 		if(IsShiftKeyDown()) then
 			self:ScrollToTop()
+		elseif(IsControlKeyDown()) then
+			self:PageUp()
 		else
 			self:ScrollUp()
 		end
 	elseif(dir < 0) then
 		if(IsShiftKeyDown()) then
 			self:ScrollToBottom()
+		elseif(IsControlKeyDown()) then
+			self:PageDown()
 		else
 			self:ScrollDown()
 		end
